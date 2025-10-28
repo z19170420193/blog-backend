@@ -1,0 +1,91 @@
+# ========================================
+# Node.js 项目 .gitignore
+# ========================================
+
+# 依赖包目录
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 环境变量文件（包含敏感信息）
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# 上传的文件（包含用户数据）
+uploads/
+uploads/**/*
+
+# 数据库文件
+*.sqlite
+*.sqlite3
+*.db
+
+# 日志文件
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE 和编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# 测试覆盖率
+coverage/
+*.lcov
+.nyc_output
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+*.bak
+*.cache
+
+# PM2 进程管理
+.pm2/
+pm2-*.log
+
+# 构建输出
+dist/
+build/
+
+# 其他
+.npm
+.eslintcache
+.node_repl_history
+.yarn-integrity
+
+# ========================================
+# 项目特定排除
+# ========================================
+
+# 备份文件
+*.backup
+*.old
+
+# 压缩文件
+*.zip
+*.tar.gz
+*.rar
