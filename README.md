@@ -132,6 +132,9 @@ npm start
 | POST | `/` | 创建文章 | Private |
 | PUT | `/:id` | 更新文章 | Private |
 | DELETE | `/:id` | 删除文章 | Private |
+| POST | `/batch-delete` | **批量删除文章** | Private |
+| POST | `/batch-update-status` | **批量更新状态** | Private |
+| POST | `/batch-update-top` | **批量置顶/取消置顶** | Admin |
 
 #### 📂 分类 (`/api/v1/categories`)
 
@@ -225,6 +228,90 @@ Content-Type: application/json
 GET /api/v1/users/profile
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
+
+## 🔄 批量操作示例
+
+### 批量删除文章
+
+```bash
+POST /api/v1/articles/batch-delete
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "ids": [1, 2, 3, 4, 5]
+}
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "成功删除 5 篇文章",
+  "data": {
+    "deleted_count": 5,
+    "total_count": 5,
+    "errors": null
+  }
+}
+```
+
+### 批量更新文章状态
+
+```bash
+POST /api/v1/articles/batch-update-status
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "ids": [1, 2, 3],
+  "status": "published"  // 或 "draft"
+}
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "成功更新 3 篇文章状态",
+  "data": {
+    "affected_count": 3,
+    "total_count": 3,
+    "errors": null
+  }
+}
+```
+
+### 批量置顶文章
+
+```bash
+POST /api/v1/articles/batch-update-top
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "ids": [1, 2],
+  "is_top": true  // 或 false
+}
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "成功置顶 2 篇文章",
+  "data": {
+    "affected_count": 2,
+    "total_count": 2,
+    "errors": null
+  }
+}
+```
+
+**注意**：
+- 批量操作会自动进行权限检查
+- 如果某些文章无权操作，会在 `errors` 字段返回详细信息
+- 批量置顶仅管理员可用
 
 ## 📁 项目结构
 

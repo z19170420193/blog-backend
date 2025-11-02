@@ -242,6 +242,44 @@ const batchDeleteValidation = [
   handleValidationErrors
 ];
 
+/**
+ * 批量更新状态验证
+ */
+const batchUpdateStatusValidation = [
+  body('ids')
+    .isArray({ min: 1 })
+    .withMessage('IDs必须是非空数组')
+    .custom((value) => {
+      return value.every(id => Number.isInteger(id) && id > 0);
+    })
+    .withMessage('IDs必须是正整数数组'),
+  
+  body('status')
+    .isIn(['draft', 'published'])
+    .withMessage('状态必须是 draft 或 published'),
+  
+  handleValidationErrors
+];
+
+/**
+ * 批量更新置顶验证
+ */
+const batchUpdateTopValidation = [
+  body('ids')
+    .isArray({ min: 1 })
+    .withMessage('IDs必须是非空数组')
+    .custom((value) => {
+      return value.every(id => Number.isInteger(id) && id > 0);
+    })
+    .withMessage('IDs必须是正整数数组'),
+  
+  body('is_top')
+    .isBoolean()
+    .withMessage('is_top 必须是布尔值'),
+  
+  handleValidationErrors
+];
+
 module.exports = {
   handleValidationErrors,
   registerValidation,
@@ -252,5 +290,7 @@ module.exports = {
   commentValidation,
   idValidation,
   paginationValidation,
-  batchDeleteValidation
+  batchDeleteValidation,
+  batchUpdateStatusValidation,
+  batchUpdateTopValidation
 };

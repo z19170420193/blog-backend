@@ -245,3 +245,205 @@ exports.deleteArticle = asyncHandler(async (req, res) => {
 
   return ApiResponse.success(res, null, '文章删除成功');
 });
+
+/**
+ * 批量删除文章
+ * POST /api/v1/articles/batch-delete
+ */
+exports.batchDeleteArticles = asyncHandler(async (req, res) => {
+  const { ids } = req.body;
+
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return ApiResponse.badRequest(res, '请提供要删除的文章ID列表');
+  }
+
+  // 查询所有文章
+  const articles = await Article.findAll({
+    where: { id: ids }
+  });
+
+  if (articles.length === 0) {
+    return ApiResponse.badRequest(res, '没有找到要删除的文章');
+  }
+
+  // 检查权限
+  const deletableIds = [];
+  const errors = [];
+
+  for (const article of articles) {
+    // 权限检查：只能删除自己的文章，或管理员可删除所有
+    if (article.author_id !== req.user.id && req.user.role !== 'admin') {
+      errors.push(`文章 "${article.title}": 无权删除`);
+      continue;
+    }
+
+    deletableIds.push(article.id);
+  }
+
+  // 使用事务批量删除
+  const { sequelize } = require('../config/database');
+  const transaction = await sequelize.transaction();
+
+  try {
+    const deletedCount = await Article.destroy({
+      where: { id: deletableIds },
+      transaction
+    });
+
+    await transaction.commit();
+
+    return ApiResponse.success(res, {
+      deleted_count: deletedCount,
+      total_count: ids.length,
+      errors: errors.length > 0 ? errors : null
+    }, `成功删除 ${deletedCount} 篇文章`);
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
+});
+
+/**
+ * 批量更新文章状态
+ * POST /api/v1/articles/batch-update-status
+ */
+exports.batchUpdateStatus = asyncHandler(async (req, res) => {
+  const { ids, status } = req.body;
+
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return ApiResponse.badRequest(res, '请提供要更新的文章ID列表');
+  }
+
+  if (!status || !['draft', 'published'].includes(status)) {
+    return ApiResponse.badRequest(res, '状态必须是 draft 或 published');
+  }
+
+  // 查询所有文章
+  const articles = await Article.findAll({
+    where: { id: ids }
+  });
+
+  if (articles.length === 0) {
+    return ApiResponse.badRequest(res, '没有找到要更新的文章');
+  }
+
+  // 检查权限
+  const updatableIds = [];
+  const errors = [];
+
+  for (const article of articles) {
+    // 权限检查：只能修改自己的文章，或管理员可修改所有
+    if (article.author_id !== req.user.id && req.user.role !== 'admin') {
+      errors.push(`文章 "${article.title}": 无权修改`);
+      continue;
+    }
+
+    updatableIds.push(article.id);
+  }
+
+  // 使用事务批量更新
+  const { sequelize } = require('../config/database');
+  const transaction = await sequelize.transaction();
+
+  try {
+    const updateData = { status };
+    
+    // 如果是发布状态，需要设置发布时间
+    if (status === 'published') {
+      // 只为之前未发布过的文章设置发布时间
+      const articlesToUpdate = articles.filter(a => updatableIds.includes(a.id));
+      for (const article of articlesToUpdate) {
+        if (!article.published_at) {
+          await article.update(
+            { status, published_at: new Date() },
+            { transaction }
+          );
+        } else {
+          await article.update({ status }, { transaction });
+        }
+      }
+    } else {
+      // 批量更新为草稿状态
+      await Article.update(
+        updateData,
+        { where: { id: updatableIds }, transaction }
+      );
+    }
+
+    await transaction.commit();
+
+    return ApiResponse.success(res, {
+      affected_count: updatableIds.length,
+      total_count: ids.length,
+      errors: errors.length > 0 ? errors : null
+    }, `成功更新 ${updatableIds.length} 篇文章状态`);
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
+});
+
+/**
+ * 批量更新文章置顶状态
+ * POST /api/v1/articles/batch-update-top
+ */
+exports.batchUpdateTop = asyncHandler(async (req, res) => {
+  const { ids, is_top } = req.body;
+
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return ApiResponse.badRequest(res, '请提供要更新的文章ID列表');
+  }
+
+  if (typeof is_top !== 'boolean') {
+    return ApiResponse.badRequest(res, 'is_top 必须是布尔值');
+  }
+
+  // 查询所有文章
+  const articles = await Article.findAll({
+    where: { id: ids }
+  });
+
+  if (articles.length === 0) {
+    return ApiResponse.badRequest(res, '没有找到要更新的文章');
+  }
+
+  // 检查权限（只有管理员可以置顶）
+  const updatableIds = [];
+  const errors = [];
+
+  for (const article of articles) {
+    // 权限检查：只有管理员可以置顶文章
+    if (req.user.role !== 'admin') {
+      errors.push(`文章 "${article.title}": 需要管理员权限`);
+      continue;
+    }
+
+    updatableIds.push(article.id);
+  }
+
+  if (updatableIds.length === 0) {
+    return ApiResponse.forbidden(res, '需要管理员权限才能置顶文章');
+  }
+
+  // 使用事务批量更新
+  const { sequelize } = require('../config/database');
+  const transaction = await sequelize.transaction();
+
+  try {
+    const [affectedCount] = await Article.update(
+      { is_top },
+      { where: { id: updatableIds }, transaction }
+    );
+
+    await transaction.commit();
+
+    return ApiResponse.success(res, {
+      affected_count: affectedCount,
+      total_count: ids.length,
+      errors: errors.length > 0 ? errors : null
+    }, `成功${is_top ? '置顶' : '取消置顶'} ${affectedCount} 篇文章`);
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
+});
