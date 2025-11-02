@@ -280,6 +280,116 @@ const batchUpdateTopValidation = [
   handleValidationErrors
 ];
 
+/**
+ * 批量更新排序验证（分类模块）
+ */
+const batchUpdateOrderValidation = [
+  body('orders')
+    .isArray({ min: 1 })
+    .withMessage('orders必须是非空数组'),
+  
+  body('orders.*.id')
+    .isInt({ min: 1 })
+    .withMessage('分类ID必须是正整数'),
+  
+  body('orders.*.sort_order')
+    .isInt({ min: 0 })
+    .withMessage('排序值必须是非负整数'),
+  
+  handleValidationErrors
+];
+
+/**
+ * 批量合并分类验证
+ */
+const batchMergeCategoriesValidation = [
+  body('source_ids')
+    .isArray({ min: 1 })
+    .withMessage('source_ids必须是非空数组')
+    .custom((value) => {
+      return value.every(id => Number.isInteger(id) && id > 0);
+    })
+    .withMessage('source_ids必须是正整数数组'),
+  
+  body('target_id')
+    .isInt({ min: 1 })
+    .withMessage('target_id必须是正整数'),
+  
+  handleValidationErrors
+];
+
+/**
+ * 批量合并标签验证
+ */
+const batchMergeTagsValidation = [
+  body('source_ids')
+    .isArray({ min: 1 })
+    .withMessage('source_ids必须是非空数组')
+    .custom((value) => {
+      return value.every(id => Number.isInteger(id) && id > 0);
+    })
+    .withMessage('source_ids必须是正整数数组'),
+  
+  body('target_id')
+    .isInt({ min: 1 })
+    .withMessage('target_id必须是正整数'),
+  
+  handleValidationErrors
+];
+
+/**
+ * 批量更新标签颜色验证
+ */
+const batchUpdateTagColorValidation = [
+  body('ids')
+    .isArray({ min: 1 })
+    .withMessage('ids必须是非空数组')
+    .custom((value) => {
+      return value.every(id => Number.isInteger(id) && id > 0);
+    })
+    .withMessage('ids必须是正整数数组'),
+  
+  body('color')
+    .matches(/^#[0-9A-Fa-f]{6}$/)
+    .withMessage('颜色必须是有效的十六进制颜色码'),
+  
+  handleValidationErrors
+];
+
+/**
+ * 批量删除评论验证
+ */
+const batchDeleteCommentsValidation = [
+  body('commentIds')
+    .isArray({ min: 1 })
+    .withMessage('commentIds必须是非空数组')
+    .custom((value) => {
+      return value.every(id => Number.isInteger(id) && id > 0);
+    })
+    .withMessage('commentIds必须是正整数数组'),
+  
+  handleValidationErrors
+];
+
+/**
+ * 批量审核评论验证
+ */
+const batchApproveCommentsValidation = [
+  body('commentIds')
+    .isArray({ min: 1 })
+    .withMessage('commentIds必须是非空数组')
+    .custom((value) => {
+      return value.every(id => Number.isInteger(id) && id > 0);
+    })
+    .withMessage('commentIds必须是正整数数组'),
+  
+  body('isApproved')
+    .isBoolean()
+    .withMessage('isApproved 必须是布尔值'),
+  
+  handleValidationErrors
+];
+
 module.exports = {
   handleValidationErrors,
   registerValidation,
@@ -292,5 +402,11 @@ module.exports = {
   paginationValidation,
   batchDeleteValidation,
   batchUpdateStatusValidation,
-  batchUpdateTopValidation
+  batchUpdateTopValidation,
+  batchUpdateOrderValidation,
+  batchMergeCategoriesValidation,
+  batchMergeTagsValidation,
+  batchUpdateTagColorValidation,
+  batchDeleteCommentsValidation,
+  batchApproveCommentsValidation
 };

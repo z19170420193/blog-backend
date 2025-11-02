@@ -74,4 +74,31 @@ router.put(
   commentController.approveComment
 );
 
+/**
+ * @route   POST /api/v1/comments/batch-delete
+ * @desc    批量删除评论
+ * @access  Private（仅管理员）
+ */
+const { batchDeleteCommentsValidation, batchApproveCommentsValidation } = require('../middlewares/validator');
+router.post(
+  '/batch-delete',
+  authenticate,
+  authorize('admin'),
+  batchDeleteCommentsValidation,
+  commentController.batchDeleteComments
+);
+
+/**
+ * @route   POST /api/v1/comments/batch-approve
+ * @desc    批量审核评论
+ * @access  Private（仅管理员）
+ */
+router.post(
+  '/batch-approve',
+  authenticate,
+  authorize('admin'),
+  batchApproveCommentsValidation,
+  commentController.batchApproveComments
+);
+
 module.exports = router;

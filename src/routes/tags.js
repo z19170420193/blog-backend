@@ -2,7 +2,13 @@ const express = require('express');
 const router = express.Router();
 const tagController = require('../controllers/tagController');
 const { authenticate, authorize } = require('../middlewares/auth');
-const { tagValidation, idValidation } = require('../middlewares/validator');
+const { 
+  tagValidation, 
+  idValidation,
+  batchDeleteValidation,
+  batchMergeTagsValidation,
+  batchUpdateTagColorValidation
+} = require('../middlewares/validator');
 
 /**
  * @route   GET /api/v1/tags
@@ -38,5 +44,26 @@ router.put('/:id', authenticate, authorize('admin'), idValidation, tagValidation
  * @access  Private（仅管理员）
  */
 router.delete('/:id', authenticate, authorize('admin'), idValidation, tagController.deleteTag);
+
+/**
+ * @route   POST /api/v1/tags/batch-delete
+ * @desc    批量删除标签
+ * @access  Private（仅管理员）
+ */
+router.post('/batch-delete', authenticate, authorize('admin'), batchDeleteValidation, tagController.batchDeleteTags);
+
+/**
+ * @route   POST /api/v1/tags/batch-merge
+ * @desc    批量合并标签
+ * @access  Private（仅管理员）
+ */
+router.post('/batch-merge', authenticate, authorize('admin'), batchMergeTagsValidation, tagController.batchMergeTags);
+
+/**
+ * @route   POST /api/v1/tags/batch-update-color
+ * @desc    批量更新标签颜色
+ * @access  Private（仅管理员）
+ */
+router.post('/batch-update-color', authenticate, authorize('admin'), batchUpdateTagColorValidation, tagController.batchUpdateTagColor);
 
 module.exports = router;

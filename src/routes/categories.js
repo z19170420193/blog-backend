@@ -2,7 +2,13 @@ const express = require('express');
 const router = express.Router();
 const categoryController = require('../controllers/categoryController');
 const { authenticate, authorize } = require('../middlewares/auth');
-const { categoryValidation, idValidation } = require('../middlewares/validator');
+const { 
+  categoryValidation, 
+  idValidation,
+  batchDeleteValidation,
+  batchUpdateOrderValidation,
+  batchMergeCategoriesValidation
+} = require('../middlewares/validator');
 
 /**
  * @route   GET /api/v1/categories
@@ -38,5 +44,26 @@ router.put('/:id', authenticate, authorize('admin'), idValidation, categoryValid
  * @access  Private（仅管理员）
  */
 router.delete('/:id', authenticate, authorize('admin'), idValidation, categoryController.deleteCategory);
+
+/**
+ * @route   POST /api/v1/categories/batch-delete
+ * @desc    批量删除分类
+ * @access  Private（仅管理员）
+ */
+router.post('/batch-delete', authenticate, authorize('admin'), batchDeleteValidation, categoryController.batchDeleteCategories);
+
+/**
+ * @route   POST /api/v1/categories/batch-update-order
+ * @desc    批量更新分类排序
+ * @access  Private（仅管理员）
+ */
+router.post('/batch-update-order', authenticate, authorize('admin'), batchUpdateOrderValidation, categoryController.batchUpdateOrder);
+
+/**
+ * @route   POST /api/v1/categories/batch-merge
+ * @desc    批量合并分类
+ * @access  Private（仅管理员）
+ */
+router.post('/batch-merge', authenticate, authorize('admin'), batchMergeCategoriesValidation, categoryController.batchMergeCategories);
 
 module.exports = router;

@@ -233,3 +233,124 @@ exports.approveComment = asyncHandler(async (req, res) => {
 
   return ApiResponse.success(res, comment, is_approved ? '评论已审核通过' : '评论已取消审核');
 });
+
+/**
+ * 批量删除评论（仅管理员）
+ * POST /api/v1/comments/batch-delete
+ */
+exports.batchDeleteComments = asyncHandler(async (req, res) => {
+  const { commentIds } = req.body;
+  const { sequelize } = require('../models');
+
+  // 使用事务保证数据一致性
+  const transaction = await sequelize.transaction();
+
+  try {
+    let successCount = 0;
+    const failures = [];
+
+    for (const commentId of commentIds) {
+      try {
+        const comment = await Comment.findByPk(commentId, { transaction });
+        
+        if (!comment) {
+          failures.push({
+            commentId,
+            reason: '评论不存在'
+          });
+          continue;
+        }
+
+        // 删除评论（会级联删除子评论，如果有配置）
+        await comment.destroy({ transaction });
+        successCount++;
+      } catch (error) {
+        console.error(`删除评论 ${commentId} 失败:`, error.message);
+        failures.push({
+          commentId,
+          reason: error.message || '删除失败'
+        });
+      }
+    }
+
+    // 提交事务
+    await transaction.commit();
+
+    return ApiResponse.success(
+      res,
+      {
+        successCount,
+        totalCount: commentIds.length,
+        failures
+      },
+      `成功删除 ${successCount} 条评论`
+    );
+  } catch (error) {
+    // 回滚事务
+    await transaction.rollback();
+    console.error('批量删除评论失败:', error);
+    return ApiResponse.error(res, '批量删除失败');
+  }
+});
+
+/**
+ * 批量审核评论（仅管理员）
+ * POST /api/v1/comments/batch-approve
+ */
+exports.batchApproveComments = asyncHandler(async (req, res) => {
+  const { commentIds, isApproved } = req.body;
+  const { sequelize } = require('../models');
+
+  // 使用事务保证数据一致性
+  const transaction = await sequelize.transaction();
+
+  try {
+    // 批量更新审核状态
+    const [affectedCount] = await Comment.update(
+      { is_approved: isApproved },
+      {
+        where: {
+          id: commentIds
+        },
+        transaction
+      }
+    );
+
+    // 获取更新后的评论列表
+    const updatedComments = await Comment.findAll({
+      where: {
+        id: commentIds
+      },
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'username', 'avatar']
+        },
+        {
+          model: Article,
+          as: 'article',
+          attributes: ['id', 'title']
+        }
+      ],
+      transaction
+    });
+
+    // 提交事务
+    await transaction.commit();
+
+    return ApiResponse.success(
+      res,
+      {
+        affectedCount,
+        comments: updatedComments
+      },
+      `成功${isApproved ? '审核通过' : '取消审核'} ${affectedCount} 条评论`
+    );
+  } catch (error) {
+    // 回滚事务
+    await transaction.rollback();
+    console.error('批量审核评论失败:', error);
+    return ApiResponse.error(res, '批量审核失败');
+  }
+});

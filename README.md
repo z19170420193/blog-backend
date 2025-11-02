@@ -145,6 +145,9 @@ npm start
 | POST | `/` | 创建分类 | Admin |
 | PUT | `/:id` | 更新分类 | Admin |
 | DELETE | `/:id` | 删除分类 | Admin |
+| POST | `/batch-delete` | **批量删除分类** | Admin |
+| POST | `/batch-update-order` | **批量更新排序** | Admin |
+| POST | `/batch-merge` | **批量合并分类** | Admin |
 
 #### 🏷️ 标签 (`/api/v1/tags`)
 
@@ -155,6 +158,9 @@ npm start
 | POST | `/` | 创建标签 | Admin |
 | PUT | `/:id` | 更新标签 | Admin |
 | DELETE | `/:id` | 删除标签 | Admin |
+| POST | `/batch-delete` | **批量删除标签** | Admin |
+| POST | `/batch-merge` | **批量合并标签** | Admin |
+| POST | `/batch-update-color` | **批量更新颜色** | Admin |
 
 #### 💬 评论 (`/api/v1`)
 
@@ -166,6 +172,8 @@ npm start
 | PUT | `/comments/:id` | 更新评论 | Private |
 | DELETE | `/comments/:id` | 删除评论 | Private |
 | PUT | `/comments/:id/approve` | 审核评论 | Admin |
+| POST | `/comments/batch/delete` | **批量删除评论** | Admin |
+| POST | `/comments/batch/approve` | **批量审核评论** | Admin |
 
 #### 🖼️ 媒体 (`/api/v1/media`)
 
@@ -312,6 +320,266 @@ Content-Type: application/json
 - 批量操作会自动进行权限检查
 - 如果某些文章无权操作，会在 `errors` 字段返回详细信息
 - 批量置顶仅管理员可用
+
+### 批量删除分类
+
+```bash
+POST /api/v1/categories/batch-delete
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "ids": [1, 2, 3]
+}
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "成功删除 2 个分类",
+  "data": {
+    "deleted_count": 2,
+    "total_count": 3,
+    "errors": [
+      "分类 \"技术文章\": 下还有 15 篇文章，无法删除"
+    ]
+  }
+}
+```
+
+### 批量更新分类排序
+
+```bash
+POST /api/v1/categories/batch-update-order
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "orders": [
+    { "id": 1, "sort_order": 10 },
+    { "id": 2, "sort_order": 20 },
+    { "id": 3, "sort_order": 30 }
+  ]
+}
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "成功更新 3 个分类的排序",
+  "data": {
+    "updated_count": 3,
+    "categories": [...]
+  }
+}
+```
+
+### 批量合并分类
+
+```bash
+POST /api/v1/categories/batch-merge
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "source_ids": [2, 3],
+  "target_id": 1
+}
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "成功合并 2 个分类，迁移了 25 篇文章",
+  "data": {
+    "merged_categories": 2,
+    "migrated_articles": 25,
+    "target_category": {
+      "id": 1,
+      "name": "技术",
+      "article_count": 45
+    }
+  }
+}
+```
+
+**分类批量操作说明**：
+- 批量删除：自动检查分类下是否有文章，有文章的分类会被跳过
+- 批量排序：适用于拖拽排序后一次性提交
+- 批量合并：将多个源分类的文章迁移到目标分类，然后删除源分类
+- 所有批量操作均使用数据库事务，保证数据一致性
+
+### 批量删除标签
+
+```bash
+POST /api/v1/tags/batch-delete
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "tagIds": [1, 2, 3]
+}
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "成功删除 2 个标签",
+  "data": {
+    "successCount": 2,
+    "totalCount": 3,
+    "failures": [
+      { "tagId": 1, "tagName": "Vue", "reason": "标签不存在" }
+    ]
+  }
+}
+```
+
+### 批量合并标签
+
+```bash
+POST /api/v1/tags/batch-merge
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "sourceTagIds": [2, 3],
+  "targetTagId": 1
+}
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "成功合并 2 个标签，迁移了 15 篇文章",
+  "data": {
+    "mergedCount": 2,
+    "migratedArticles": 15,
+    "targetTag": {
+      "id": 1,
+      "name": "Vue.js",
+      "article_count": 25
+    }
+  }
+}
+```
+
+### 批量更新标签颜色
+
+```bash
+POST /api/v1/tags/batch-update-color
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "tagIds": [1, 2, 3],
+  "color": "#409eff"
+}
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "成功更新 3 个标签的颜色",
+  "data": {
+    "affectedCount": 3,
+    "tags": [
+      { "id": 1, "name": "Vue", "color": "#409eff" },
+      { "id": 2, "name": "React", "color": "#409eff" },
+      { "id": 3, "name": "Angular", "color": "#409eff" }
+    ]
+  }
+}
+```
+
+**标签批量操作说明**：
+- 批量删除：自动解除标签与文章的关联关系
+- 批量合并：将多个源标签的文章关联迁移到目标标签，自动处理重复关联
+- 批量更新颜色：为多个标签设置相同颜色，适用于分类标记
+- 所有批量操作均使用数据库事务，保证数据一致性
+
+### 批量删除评论
+
+```bash
+POST /api/v1/comments/batch/delete
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "commentIds": [1, 2, 3, 4, 5]
+}
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "成功删除 4 条评论",
+  "data": {
+    "successCount": 4,
+    "totalCount": 5,
+    "failures": [
+      {
+        "commentId": 2,
+        "reason": "评论不存在"
+      }
+    ]
+  }
+}
+```
+
+### 批量审核评论
+
+```bash
+POST /api/v1/comments/batch/approve
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "commentIds": [1, 2, 3],
+  "isApproved": true  // 或 false 取消审核
+}
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "成功审核 3 条评论",
+  "data": {
+    "affectedCount": 3,
+    "comments": [
+      {
+        "id": 1,
+        "content": "评论内容 1",
+        "is_approved": true
+      },
+      {
+        "id": 2,
+        "content": "评论内容 2",
+        "is_approved": true
+      },
+      {
+        "id": 3,
+        "content": "评论内容 3",
+        "is_approved": true
+      }
+    ]
+  }
+}
+```
+
+**评论批量操作说明**：
+- 批量删除：支持部分成功，返回详细失败信息
+- 批量审核：支持审核通过或取消审核，返回更新后的评论列表
+- 所有批量操作均使用数据库事务，保证数据一致性
+- 仅管理员可执行评论批量操作
 
 ## 📁 项目结构
 
