@@ -390,6 +390,52 @@ const batchApproveCommentsValidation = [
   handleValidationErrors
 ];
 
+/**
+ * 说说创建/更新验证规则
+ */
+const momentValidation = [
+  body('content')
+    .trim()
+    .isLength({ min: 1, max: 1000 })
+    .withMessage('说说内容长度必须在1-1000个字符之间'),
+  
+  body('images')
+    .optional()
+    .isArray({ max: 9 })
+    .withMessage('图片必须是数组，且最多9张')
+    .custom((value) => {
+      if (value && value.length > 0) {
+        return value.every(url => typeof url === 'string' && url.length > 0);
+      }
+      return true;
+    })
+    .withMessage('图片URL必须是非空字符串数组'),
+  
+  body('location')
+    .optional()
+    .trim()
+    .isLength({ max: 200 })
+    .withMessage('位置信息不能超过200个字符'),
+  
+  body('visibility')
+    .optional()
+    .isIn(['public', 'private', 'friends'])
+    .withMessage('可见性必须是 public, private 或 friends'),
+  
+  handleValidationErrors
+];
+
+/**
+ * 说说置顶验证
+ */
+const momentTogglePinValidation = [
+  body('is_pinned')
+    .isBoolean()
+    .withMessage('is_pinned 必须是布尔值'),
+  
+  handleValidationErrors
+];
+
 module.exports = {
   handleValidationErrors,
   registerValidation,
@@ -408,5 +454,7 @@ module.exports = {
   batchMergeTagsValidation,
   batchUpdateTagColorValidation,
   batchDeleteCommentsValidation,
-  batchApproveCommentsValidation
+  batchApproveCommentsValidation,
+  momentValidation,
+  momentTogglePinValidation
 };

@@ -9,6 +9,7 @@ const categoryRoutes = require('./categories');
 const tagRoutes = require('./tags');
 const commentRoutes = require('./comments');
 const mediaRoutes = require('./media');
+const momentRoutes = require('./moments');
 
 /**
  * API 路由配置
@@ -39,6 +40,9 @@ router.use('/', commentRoutes);
 // 媒体文件相关路由
 router.use('/media', mediaRoutes);
 
+// 说说相关路由
+router.use('/moments', momentRoutes);
+
 // API 根路径 - 健康检查
 router.get('/', (req, res) => {
   res.json({
@@ -52,7 +56,8 @@ router.get('/', (req, res) => {
       categories: '/api/v1/categories',
       tags: '/api/v1/tags',
       comments: '/api/v1/comments',
-      media: '/api/v1/media'
+      media: '/api/v1/media',
+      moments: '/api/v1/moments'
     }
   });
 });

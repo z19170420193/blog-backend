@@ -186,6 +186,18 @@ npm start
 | DELETE | `/:id` | 删除文件 | Private |
 | POST | `/batch-delete` | 批量删除 | Private |
 
+#### 💬 说说 (`/api/v1/moments`) 🆕
+
+| 方法 | 端点 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/` | 获取说说列表 | Public |
+| GET | `/:id` | 获取说说详情 | Public |
+| POST | `/` | 发布说说 | Private |
+| PUT | `/:id` | 更新说说 | Private |
+| DELETE | `/:id` | 删除说说 | Private |
+| PUT | `/:id/pin` | **置顶/取消置顶** | Private |
+| POST | `/batch-delete` | **批量删除说说** | Private |
+
 ## 🔑 认证示例
 
 ### 1. 注册
@@ -581,6 +593,113 @@ Content-Type: application/json
 - 所有批量操作均使用数据库事务，保证数据一致性
 - 仅管理员可执行评论批量操作
 
+### 发布说说 🆕
+
+```bash
+POST /api/v1/moments
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "content": "今天天气真好！",
+  "images": ["url1", "url2", "url3"],  // 最多9张
+  "location": "北京市朝阳区",
+  "visibility": "public"  // public | private | friends
+}
+```
+
+响应：
+```json
+{
+  "code": 201,
+  "message": "发布成功",
+  "data": {
+    "id": 1,
+    "content": "今天天气真好！",
+    "images": ["url1", "url2", "url3"],
+    "location": "北京市朝阳区",
+    "visibility": "public",
+    "is_pinned": false,
+    "user": {
+      "id": 1,
+      "username": "admin",
+      "avatar": "..."
+    },
+    "published_at": "2025-11-02T14:30:00Z",
+    "created_at": "2025-11-02T14:30:00Z"
+  }
+}
+```
+
+### 获取说说列表
+
+```bash
+GET /api/v1/moments?page=1&limit=10&user_id=1
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "moments": [
+      {
+        "id": 1,
+        "content": "今天天气真好！",
+        "images": ["url1", "url2"],
+        "location": "北京市",
+        "visibility": "public",
+        "is_pinned": false,
+        "user": {
+          "id": 1,
+          "username": "admin",
+          "avatar": "..."
+        },
+        "published_at": "2025-11-02T14:30:00Z"
+      }
+    ],
+    "total": 100,
+    "page": 1,
+    "limit": 10
+  }
+}
+```
+
+### 批量删除说说
+
+```bash
+POST /api/v1/moments/batch-delete
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "ids": [1, 2, 3, 4, 5]
+}
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "成功删除 5 条说说",
+  "data": {
+    "deleted_count": 5,
+    "total_count": 5,
+    "errors": null
+  }
+}
+```
+
+**说说模块特性**：
+- ✅ 支持图片上传（最多9张）
+- ✅ 可见性控制（公开/私密/好友）
+- ✅ 位置信息可选
+- ✅ 置顶功能
+- ✅ 批量删除
+- ✅ 权限控制（作者/管理员）
+- ✅ 完整的数据验证
+
 ## 📁 项目结构
 
 ```
@@ -595,7 +714,8 @@ backend/
 │   │   ├── Category.js  # 分类模型
 │   │   ├── Tag.js       # 标签模型
 │   │   ├── Comment.js   # 评论模型
-│   │   └── Media.js     # 媒体模型
+│   │   ├── Media.js     # 媒体模型
+│   │   └── Moment.js    # 说说模型 🆕
 │   ├── controllers/     # 控制器
 │   │   ├── authController.js
 │   │   ├── userController.js
@@ -603,7 +723,8 @@ backend/
 │   │   ├── categoryController.js
 │   │   ├── tagController.js
 │   │   ├── commentController.js
-│   │   └── mediaController.js
+│   │   ├── mediaController.js
+│   │   └── momentController.js  # 说说控制器 🆕
 │   ├── routes/          # 路由
 │   │   ├── index.js     # 路由入口
 │   │   ├── auth.js
@@ -612,7 +733,8 @@ backend/
 │   │   ├── categories.js
 │   │   ├── tags.js
 │   │   ├── comments.js
-│   │   └── media.js
+│   │   ├── media.js
+│   │   └── moments.js       # 说说路由 🆕
 │   ├── middlewares/     # 中间件
 │   │   ├── auth.js      # 认证中间件
 │   │   ├── upload.js    # 上传中间件
