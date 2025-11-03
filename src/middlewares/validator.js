@@ -602,6 +602,75 @@ const projectQueryValidation = [
   handleValidationErrors
 ];
 
+/**
+ * 留言创建验证规则
+ */
+const messageValidation = [
+  body('content')
+    .trim()
+    .isLength({ min: 1, max: 1000 })
+    .withMessage('留言内容长度必须在1-1000个字符之间'),
+  
+  body('nickname')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .withMessage('昵称长度必须在1-50个字符之间'),
+  
+  body('email')
+    .optional()
+    .trim()
+    .isEmail()
+    .withMessage('邮箱格式不正确')
+    .normalizeEmail(),
+  
+  body('mood')
+    .optional()
+    .isIn(['happy', 'sad', 'angry', 'excited', 'thinking'])
+    .withMessage('心情必须是 happy, sad, angry, excited 或 thinking'),
+  
+  body('reply_to_id')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('回复留言ID必须是正整数'),
+  
+  handleValidationErrors
+];
+
+/**
+ * 批量删除留言验证
+ */
+const batchDeleteMessagesValidation = [
+  body('messageIds')
+    .isArray({ min: 1 })
+    .withMessage('messageIds必须是非空数组')
+    .custom((value) => {
+      return value.every(id => Number.isInteger(id) && id > 0);
+    })
+    .withMessage('messageIds必须是正整数数组'),
+  
+  handleValidationErrors
+];
+
+/**
+ * 批量审核留言验证
+ */
+const batchApproveMessagesValidation = [
+  body('messageIds')
+    .isArray({ min: 1 })
+    .withMessage('messageIds必须是非空数组')
+    .custom((value) => {
+      return value.every(id => Number.isInteger(id) && id > 0);
+    })
+    .withMessage('messageIds必须是正整数数组'),
+  
+  body('status')
+    .isIn(['approved', 'rejected', 'pending'])
+    .withMessage('status 必须是 approved, rejected 或 pending'),
+  
+  handleValidationErrors
+];
+
 module.exports = {
   handleValidationErrors,
   registerValidation,
@@ -627,5 +696,8 @@ module.exports = {
   projectUpdateValidation,
   projectBatchUpdateStatusValidation,
   projectBatchUpdateFeaturedValidation,
-  projectQueryValidation
+  projectQueryValidation,
+  messageValidation,
+  batchDeleteMessagesValidation,
+  batchApproveMessagesValidation
 };

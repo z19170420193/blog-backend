@@ -11,6 +11,7 @@ const commentRoutes = require('./comments');
 const mediaRoutes = require('./media');
 const momentRoutes = require('./moments');
 const projectRoutes = require('./projects');
+const messageRoutes = require('./messages');
 
 /**
  * API 路由配置
@@ -47,6 +48,9 @@ router.use('/moments', momentRoutes);
 // 项目相关路由
 router.use('/projects', projectRoutes);
 
+// 留言相关路由
+router.use('/messages', messageRoutes);
+
 // API 根路径 - 健康检查
 router.get('/', (req, res) => {
   res.json({
@@ -62,7 +66,8 @@ router.get('/', (req, res) => {
       comments: '/api/v1/comments',
       media: '/api/v1/media',
       moments: '/api/v1/moments',
-      projects: '/api/v1/projects'
+      projects: '/api/v1/projects',
+      messages: '/api/v1/messages'
     }
   });
 });

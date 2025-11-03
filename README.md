@@ -211,6 +211,21 @@ npm start
 | POST | `/:id/view` | **增加浏览量** | Public |
 | POST | `/batch-delete` | **批量删除项目** | Private |
 
+#### 💬 留言 (`/api/v1/messages`) 🆕
+
+| 方法 | 端点 | 说明 | 权限 |
+|------|------|------|
+| GET | `/` | 获取已审核留言列表 | Public |
+| GET | `/admin` | 获取所有留言（管理后台） | Admin |
+| POST | `/` | 发布留言 | Public |
+| PUT | `/:id` | 更新留言 | Private |
+| DELETE | `/:id` | 删除留言 | Private |
+| PUT | `/:id/status` | **更新审核状态** | Admin |
+| POST | `/:id/like` | **点赞留言** | Public |
+| POST | `/batch-delete` | **批量删除留言** | Admin |
+| POST | `/batch-approve` | **批量审核留言** | Admin |
+| GET | `/stats` | **获取留言统计** | Admin |
+
 ## 🔑 认证示例
 
 ### 1. 注册
@@ -855,6 +870,244 @@ Content-Type: application/json
 - ✅ 权限控制（作者/管理员）
 - ✅ Markdown 详细介绍
 
+### 发布留言 🆕
+
+```bash
+POST /api/v1/messages
+Content-Type: application/json
+
+{
+  "nickname": "访客",           // 昵称（游客必填）
+  "email": "guest@example.com",  // 邮箱（游客必填）
+  "content": "这是一条留言！",    // 留言内容（必填，最多 500 字）
+  "mood": "happy",               // 心情：happy | sad | angry | excited | thinking
+  "reply_to_id": 1               // 回复的留言 ID（可选）
+}
+```
+
+响应：
+```json
+{
+  "code": 201,
+  "message": "留言发布成功，等待审核",
+  "data": {
+    "id": 1,
+    "nickname": "访客",
+    "email": "guest@example.com",
+    "content": "这是一条留言！",
+    "mood": "happy",
+    "avatar": null,
+    "status": "pending",
+    "color": "#FFE4E1",
+    "likes": 0,
+    "ip": "127.0.0.1",
+    "location": null,
+    "browser": "Chrome",
+    "reply_to_id": null,
+    "user_id": null,
+    "user": null,
+    "replies": [],
+    "created_at": "2025-11-03T10:30:00Z"
+  }
+}
+```
+
+### 获取留言列表（公开）
+
+```bash
+GET /api/v1/messages?page=1&limit=10&mood=happy
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "messages": [
+      {
+        "id": 1,
+        "nickname": "访客",
+        "content": "这是一条留言！",
+        "mood": "happy",
+        "avatar": null,
+        "status": "approved",
+        "color": "#FFE4E1",
+        "likes": 5,
+        "location": "北京市",
+        "browser": "Chrome",
+        "reply_to_id": null,
+        "user": null,
+        "replies": [
+          {
+            "id": 2,
+            "nickname": "管理员",
+            "content": "感谢留言！",
+            "created_at": "2025-11-03T11:00:00Z"
+          }
+        ],
+        "created_at": "2025-11-03T10:30:00Z"
+      }
+    ],
+    "total": 100,
+    "page": 1,
+    "limit": 10
+  }
+}
+```
+
+### 获取留言列表（管理后台）
+
+```bash
+GET /api/v1/messages/admin?page=1&limit=10&status=pending&keyword=留言
+Authorization: Bearer <token>
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "messages": [...],
+    "total": 50,
+    "page": 1,
+    "limit": 10
+  }
+}
+```
+
+### 更新留言审核状态
+
+```bash
+PUT /api/v1/messages/:id/status
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "status": "approved"  // approved | rejected | pending
+}
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "留言已审核通过",
+  "data": {
+    "id": 1,
+    "status": "approved",
+    "updated_at": "2025-11-03T11:00:00Z"
+  }
+}
+```
+
+### 点赞留言
+
+```bash
+POST /api/v1/messages/:id/like
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "点赞成功",
+  "data": {
+    "id": 1,
+    "likes": 6
+  }
+}
+```
+
+### 批量删除留言
+
+```bash
+POST /api/v1/messages/batch-delete
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "ids": [1, 2, 3, 4, 5]
+}
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "成功删除 5 条留言",
+  "data": {
+    "deleted_count": 5,
+    "total_count": 5,
+    "errors": null
+  }
+}
+```
+
+### 批量审核留言
+
+```bash
+POST /api/v1/messages/batch-approve
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "ids": [1, 2, 3],
+  "status": "approved"  // approved | rejected
+}
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "成功审核 3 条留言",
+  "data": {
+    "affected_count": 3,
+    "total_count": 3,
+    "errors": null
+  }
+}
+```
+
+### 获取留言统计
+
+```bash
+GET /api/v1/messages/stats
+Authorization: Bearer <token>
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "total": 150,
+    "approved": 120,
+    "pending": 25,
+    "rejected": 5,
+    "today": 10
+  }
+}
+```
+
+**留言模块特性**：
+- ✅ 游客和登录用户均可留言
+- ✅ 游客留言需要审核（pending），登录用户自动通过（approved）
+- ✅ 支持回复功能（reply_to_id）
+- ✅ 五种心情选择（happy/sad/angry/excited/thinking）
+- ✅ 随机卡片背景颜色（10 种配色）
+- ✅ 点赞功能（无限制）
+- ✅ 记录 IP、位置、浏览器信息
+- ✅ 三种审核状态（pending/approved/rejected）
+- ✅ 批量删除和批量审核
+- ✅ 统计数据（总数/已审核/待审核/已拒绝/今日新增）
+- ✅ 多维度筛选（状态/心情/关键词）
+- ✅ 权限控制（作者/管理员）
+- ✅ 完整的数据验证
+
 ## 📁 项目结构
 
 ```
@@ -871,7 +1124,8 @@ backend/
 │   │   ├── Comment.js   # 评论模型
 │   │   ├── Media.js     # 媒体模型
 │   │   ├── Moment.js    # 说说模型 🆕
-│   │   └── Project.js   # 项目模型 🆕
+│   │   ├── Project.js   # 项目模型 🆕
+│   │   └── Message.js   # 留言模型 🆕
 │   ├── controllers/     # 控制器
 │   │   ├── authController.js
 │   │   ├── userController.js
@@ -881,7 +1135,8 @@ backend/
 │   │   ├── commentController.js
 │   │   ├── mediaController.js
 │   │   ├── momentController.js  # 说说控制器 🆕
-│   │   └── projectController.js  # 项目控制器 🆕
+│   │   ├── projectController.js  # 项目控制器 🆕
+│   │   └── messageController.js  # 留言控制器 🆕
 │   ├── routes/          # 路由
 │   │   ├── index.js     # 路由入口
 │   │   ├── auth.js
@@ -892,7 +1147,8 @@ backend/
 │   │   ├── comments.js
 │   │   ├── media.js
 │   │   ├── moments.js       # 说说路由 🆕
-│   │   └── projects.js      # 项目路由 🆕
+│   │   ├── projects.js      # 项目路由 🆕
+│   │   └── messages.js      # 留言路由 🆕
 │   ├── middlewares/     # 中间件
 │   │   ├── auth.js      # 认证中间件
 │   │   ├── upload.js    # 上传中间件

@@ -9,6 +9,7 @@ const Comment = require('./Comment')(sequelize);
 const Media = require('./Media')(sequelize);
 const Moment = require('./Moment')(sequelize);
 const Project = require('./Project')(sequelize);
+const Message = require('./Message')(sequelize);
 
 // 定义模型关联关系
 
@@ -58,6 +59,14 @@ Moment.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 User.hasMany(Project, { foreignKey: 'author_id', as: 'projects' });
 Project.belongsTo(User, { foreignKey: 'author_id', as: 'author' });
 
+// User - Message (一对多)
+User.hasMany(Message, { foreignKey: 'user_id', as: 'messages' });
+Message.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
+// Message - Message (自关联，回复)
+Message.hasMany(Message, { foreignKey: 'reply_to_id', as: 'replies' });
+Message.belongsTo(Message, { foreignKey: 'reply_to_id', as: 'reply_to' });
+
 // 导出所有模型
 module.exports = {
   sequelize,
@@ -68,5 +77,6 @@ module.exports = {
   Comment,
   Media,
   Moment,
-  Project
+  Project,
+  Message
 };
