@@ -436,6 +436,172 @@ const momentTogglePinValidation = [
   handleValidationErrors
 ];
 
+/**
+ * 项目创建/更新验证规则
+ */
+const projectValidation = [
+  body('title')
+    .trim()
+    .notEmpty().withMessage('项目名称不能为空')
+    .isLength({ min: 1, max: 200 }).withMessage('项目名称长度应在1-200字符之间'),
+  
+  body('subtitle')
+    .optional()
+    .trim()
+    .isLength({ max: 300 }).withMessage('副标题不能超过300字符'),
+  
+  body('description')
+    .trim()
+    .notEmpty().withMessage('项目简介不能为空'),
+  
+  body('content')
+    .optional()
+    .trim(),
+  
+  body('cover_image')
+    .optional()
+    .custom((value) => !value || /^https?:\/\/.+/.test(value)).withMessage('封面图必须是有效的URL'),
+  
+  body('images')
+    .optional()
+    .isArray().withMessage('项目截图必须是数组')
+    .custom((value) => !value || value.length <= 10).withMessage('最多只能上传10张截图'),
+  
+  body('demo_video')
+    .optional()
+    .custom((value) => !value || /^https?:\/\/.+/.test(value)).withMessage('演示视频必须是有效的URL'),
+  
+  body('tech_stack')
+    .isArray({ min: 1 }).withMessage('至少需要一个技术栈')
+    .custom((value) => value.every(item => typeof item === 'string')).withMessage('技术栈必须是字符串数组'),
+  
+  body('project_type')
+    .optional()
+    .isIn(['web', 'mobile', 'desktop', 'backend', 'fullstack', 'other']).withMessage('无效的项目类型'),
+  
+  body('status')
+    .optional()
+    .isIn(['completed', 'in_progress', 'archived', 'draft']).withMessage('无效的状态值'),
+  
+  body('github_url')
+    .optional()
+    .custom((value) => !value || /^https?:\/\/.+/.test(value)).withMessage('GitHub地址必须是有效的URL'),
+  
+  body('demo_url')
+    .optional()
+    .custom((value) => !value || /^https?:\/\/.+/.test(value)).withMessage('演示地址必须是有效的URL'),
+  
+  body('documentation_url')
+    .optional()
+    .custom((value) => !value || /^https?:\/\/.+/.test(value)).withMessage('文档地址必须是有效的URL'),
+  
+  body('start_date')
+    .notEmpty().withMessage('开始日期不能为空')
+    .isISO8601().withMessage('开始日期格式不正确'),
+  
+  body('end_date')
+    .notEmpty().withMessage('结束日期不能为空')
+    .isISO8601().withMessage('结束日期格式不正确'),
+  
+  body('duration')
+    .optional()
+    .isInt({ min: 0 }).withMessage('开发周期必须大于等于0'),
+  
+  body('team_size')
+    .optional()
+    .isInt({ min: 1 }).withMessage('团队规模必须大于等于1'),
+  
+  body('is_featured')
+    .optional()
+    .isBoolean().withMessage('精选标记必须是布尔值'),
+  
+  body('is_open_source')
+    .optional()
+    .isBoolean().withMessage('开源标记必须是布尔值'),
+  
+  body('display_order')
+    .optional()
+    .isInt().withMessage('显示顺序必须是整数'),
+  
+  body('category')
+    .optional()
+    .trim()
+    .isLength({ max: 50 }).withMessage('项目分类不能超过50字符'),
+  
+  body('tags')
+    .optional()
+    .isArray().withMessage('标签必须是数组'),
+  
+  handleValidationErrors
+];
+
+/**
+ * 项目更新验证规则（简化版）
+ */
+const projectUpdateValidation = [
+  body('title')
+    .optional()
+    .trim()
+    .notEmpty().withMessage('项目名称不能为空')
+    .isLength({ min: 1, max: 200 }).withMessage('项目名称长度应在1-200字符之间'),
+  
+  body('tech_stack')
+    .optional()
+    .isArray({ min: 1 }).withMessage('至少需要一个技术栈'),
+  
+  handleValidationErrors
+];
+
+/**
+ * 项目批量更新状态验证
+ */
+const projectBatchUpdateStatusValidation = [
+  body('ids')
+    .isArray({ min: 1 })
+    .withMessage('ids必须是非空数组')
+    .custom((value) => {
+      return value.every(id => Number.isInteger(id) && id > 0);
+    })
+    .withMessage('ids必须是正整数数组'),
+  
+  body('status')
+    .isIn(['completed', 'in_progress', 'archived', 'draft'])
+    .withMessage('状态必须是 completed, in_progress, archived 或 draft'),
+  
+  handleValidationErrors
+];
+
+/**
+ * 项目批量设置精选验证
+ */
+const projectBatchUpdateFeaturedValidation = [
+  body('ids')
+    .isArray({ min: 1 })
+    .withMessage('ids必须是非空数组')
+    .custom((value) => {
+      return value.every(id => Number.isInteger(id) && id > 0);
+    })
+    .withMessage('ids必须是正整数数组'),
+  
+  body('is_featured')
+    .isBoolean()
+    .withMessage('is_featured 必须是布尔值'),
+  
+  handleValidationErrors
+];
+
+/**
+ * 项目查询验证
+ */
+const projectQueryValidation = [
+  query('page').optional().isInt({ min: 1 }).withMessage('页码必须大于0'),
+  query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('每页数量应在1-50之间'),
+  query('status').optional().isIn(['completed', 'in_progress', 'archived', 'draft', 'all']),
+  query('type').optional().isIn(['web', 'mobile', 'desktop', 'backend', 'fullstack', 'other']),
+  query('featured').optional().isBoolean(),
+  handleValidationErrors
+];
+
 module.exports = {
   handleValidationErrors,
   registerValidation,
@@ -456,5 +622,10 @@ module.exports = {
   batchDeleteCommentsValidation,
   batchApproveCommentsValidation,
   momentValidation,
-  momentTogglePinValidation
+  momentTogglePinValidation,
+  projectValidation,
+  projectUpdateValidation,
+  projectBatchUpdateStatusValidation,
+  projectBatchUpdateFeaturedValidation,
+  projectQueryValidation
 };

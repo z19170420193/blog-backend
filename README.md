@@ -189,7 +189,7 @@ npm start
 #### 💬 说说 (`/api/v1/moments`) 🆕
 
 | 方法 | 端点 | 说明 | 权限 |
-|------|------|------|------|
+|------|------|------|
 | GET | `/` | 获取说说列表 | Public |
 | GET | `/:id` | 获取说说详情 | Public |
 | POST | `/` | 发布说说 | Private |
@@ -197,6 +197,19 @@ npm start
 | DELETE | `/:id` | 删除说说 | Private |
 | PUT | `/:id/pin` | **置顶/取消置顶** | Private |
 | POST | `/batch-delete` | **批量删除说说** | Private |
+
+#### 💻 项目 (`/api/v1/projects`) 🆕
+
+| 方法 | 端点 | 说明 | 权限 |
+|------|------|------|
+| GET | `/` | 获取项目列表 | Public |
+| GET | `/featured` | 获取精选项目 | Public |
+| GET | `/:id` | 获取项目详情 | Public |
+| POST | `/` | 创建项目 | Private |
+| PUT | `/:id` | 更新项目 | Private |
+| DELETE | `/:id` | 删除项目 | Private |
+| POST | `/:id/view` | **增加浏览量** | Public |
+| POST | `/batch-delete` | **批量删除项目** | Private |
 
 ## 🔑 认证示例
 
@@ -700,6 +713,148 @@ Content-Type: application/json
 - ✅ 权限控制（作者/管理员）
 - ✅ 完整的数据验证
 
+### 创建项目 🆕
+
+```bash
+POST /api/v1/projects
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "title": "个人博客系统",
+  "subtitle": "基于 Vue3 + Node.js 的全栈项目",
+  "description": "一个功能完善的个人博客系统，包括文章管理、评论系统、说说功能、项目展示等模块。",
+  "content": "## 项目介绍\n\n...",
+  "cover_image": "https://example.com/cover.jpg",
+  "project_type": "fullstack",
+  "category": "个人项目",
+  "tags": ["Vue3", "Node.js", "全栈"],
+  "tech_stack": ["Vue3", "TypeScript", "Express", "MySQL", "Element Plus"],
+  "demo_url": "https://demo.example.com",
+  "github_url": "https://github.com/user/blog",
+  "documentation_url": "https://docs.example.com",
+  "status": "completed",
+  "start_date": "2024-01-01",
+  "end_date": "2024-03-01",
+  "team_size": 1,
+  "images": [
+    "https://example.com/screenshot1.jpg",
+    "https://example.com/screenshot2.jpg"
+  ],
+  "is_featured": true,
+  "is_open_source": true
+}
+```
+
+响应：
+```json
+{
+  "code": 201,
+  "message": "创建成功",
+  "data": {
+    "id": 1,
+    "title": "个人博客系统",
+    "subtitle": "基于 Vue3 + Node.js 的全栈项目",
+    "project_type": "fullstack",
+    "status": "completed",
+    "is_featured": true,
+    "is_open_source": true,
+    "view_count": 0,
+    "author": {
+      "id": 1,
+      "username": "admin",
+      "email": "admin@example.com"
+    },
+    "created_at": "2025-11-03T02:30:00Z",
+    "updated_at": "2025-11-03T02:30:00Z"
+  }
+}
+```
+
+### 获取项目列表
+
+```bash
+GET /api/v1/projects?page=1&limit=10&project_type=fullstack&status=completed&is_featured=true
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "projects": [
+      {
+        "id": 1,
+        "title": "个人博客系统",
+        "subtitle": "基于 Vue3 + Node.js 的全栈项目",
+        "description": "...",
+        "cover_image": "https://example.com/cover.jpg",
+        "project_type": "fullstack",
+        "tech_stack": ["Vue3", "TypeScript", "Express"],
+        "status": "completed",
+        "is_featured": true,
+        "is_open_source": true,
+        "view_count": 150,
+        "start_date": "2024-01-01",
+        "end_date": "2024-03-01",
+        "duration": 60,
+        "team_size": 1,
+        "author": {
+          "id": 1,
+          "username": "admin"
+        },
+        "created_at": "2025-11-03T02:30:00Z"
+      }
+    ],
+    "total": 10,
+    "page": 1,
+    "limit": 10
+  }
+}
+```
+
+### 批量删除项目
+
+```bash
+POST /api/v1/projects/batch-delete
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "ids": [1, 2, 3]
+}
+```
+
+响应：
+```json
+{
+  "code": 200,
+  "message": "成功删除 3 个项目",
+  "data": {
+    "deleted_count": 3,
+    "total_count": 3,
+    "errors": null
+  }
+}
+```
+
+**项目模块特性**：
+- ✅ 完整的 CRUD 操作
+- ✅ 项目类型（Web/移动/桌面/后端/全栈/其他）
+- ✅ 项目状态（已完成/进行中/已归档/草稿）
+- ✅ 精选项目标记
+- ✅ 开源项目标记
+- ✅ 技术栈管理
+- ✅ 项目截图（多图）
+- ✅ 多维度筛选（类型/状态/精选/开源）
+- ✅ 项目链接（演示/GitHub/文档/视频）
+- ✅ 浏览量统计
+- ✅ 开发周期计算
+- ✅ 批量删除
+- ✅ 权限控制（作者/管理员）
+- ✅ Markdown 详细介绍
+
 ## 📁 项目结构
 
 ```
@@ -715,7 +870,8 @@ backend/
 │   │   ├── Tag.js       # 标签模型
 │   │   ├── Comment.js   # 评论模型
 │   │   ├── Media.js     # 媒体模型
-│   │   └── Moment.js    # 说说模型 🆕
+│   │   ├── Moment.js    # 说说模型 🆕
+│   │   └── Project.js   # 项目模型 🆕
 │   ├── controllers/     # 控制器
 │   │   ├── authController.js
 │   │   ├── userController.js
@@ -724,7 +880,8 @@ backend/
 │   │   ├── tagController.js
 │   │   ├── commentController.js
 │   │   ├── mediaController.js
-│   │   └── momentController.js  # 说说控制器 🆕
+│   │   ├── momentController.js  # 说说控制器 🆕
+│   │   └── projectController.js  # 项目控制器 🆕
 │   ├── routes/          # 路由
 │   │   ├── index.js     # 路由入口
 │   │   ├── auth.js
@@ -734,7 +891,8 @@ backend/
 │   │   ├── tags.js
 │   │   ├── comments.js
 │   │   ├── media.js
-│   │   └── moments.js       # 说说路由 🆕
+│   │   ├── moments.js       # 说说路由 🆕
+│   │   └── projects.js      # 项目路由 🆕
 │   ├── middlewares/     # 中间件
 │   │   ├── auth.js      # 认证中间件
 │   │   ├── upload.js    # 上传中间件

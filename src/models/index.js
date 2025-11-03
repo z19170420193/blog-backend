@@ -8,6 +8,7 @@ const Article = require('./Article')(sequelize);
 const Comment = require('./Comment')(sequelize);
 const Media = require('./Media')(sequelize);
 const Moment = require('./Moment')(sequelize);
+const Project = require('./Project')(sequelize);
 
 // 定义模型关联关系
 
@@ -53,6 +54,10 @@ Comment.belongsTo(Comment, { foreignKey: 'parent_id', as: 'parent' });
 User.hasMany(Moment, { foreignKey: 'user_id', as: 'moments' });
 Moment.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
+// User - Project (一对多)
+User.hasMany(Project, { foreignKey: 'author_id', as: 'projects' });
+Project.belongsTo(User, { foreignKey: 'author_id', as: 'author' });
+
 // 导出所有模型
 module.exports = {
   sequelize,
@@ -62,5 +67,6 @@ module.exports = {
   Article,
   Comment,
   Media,
-  Moment
+  Moment,
+  Project
 };
